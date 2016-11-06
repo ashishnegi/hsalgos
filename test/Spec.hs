@@ -1,2 +1,4 @@
+import DivideAndConquerTest as DCT
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = DCT.test
