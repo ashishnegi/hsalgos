@@ -9,9 +9,7 @@ kthSmallest k list =
       [] -> Nothing
       x:xs ->
         let pivot = x -- randomness would have helped
-            smaller = filter (< x) list
-            same = filter (== x) list
-            larger = filter (> x) list
+            (smaller, same, larger) = listInParts x list
             lenSmaller = length smaller
             lenSame = length same
         in if lenSmaller > k
@@ -20,3 +18,16 @@ kthSmallest k list =
              if lenSmaller + lenSame > k
              then Just x
              else kthSmallest (k - lenSmaller - lenSame) larger
+
+listInParts :: (Ord a) => a -> [a] -> ([a],[a],[a])
+listInParts x list =
+  case list of
+    [] -> ([],[],[])
+    y:ys ->
+      let (smaller, same, larger) = listInParts x ys
+      in if y < x
+         then (y:smaller, same, larger)
+         else
+           if y == x
+           then (smaller, x:same, larger)
+           else (smaller, same, y:larger)
