@@ -17,8 +17,10 @@ library
   hs-source-dirs:      src
   exposed-modules:     Fibonacci
                      , DivideAndConquer
+                     , DepthFirstSearch
   build-depends:       base >= 4.7 && < 5
                      , matrix
+                     , containers
   default-language:    Haskell2010
 
 executable hsalgos-exe
@@ -38,6 +40,7 @@ test-suite hsalgos-test
                      , hsalgos
                      , QuickCheck
                      , hspec
+                     , containers
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

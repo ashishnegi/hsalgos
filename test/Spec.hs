@@ -1,4 +1,5 @@
 import DivideAndConquerTest as DCT
+import DepthFirstSearchTest as DFS
 
 main :: IO ()
-main = DCT.test
+main = DCT.test >> DFS.test
