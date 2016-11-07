@@ -24,43 +24,33 @@ data DFSResult = DFSResult { nodeId :: NodeId
                            } deriving (Eq, Show)
 
 depthFirstSearch :: Graph -> ([DFSResult], Int, Set.Set NodeId)
-depthFirstSearch graph = depthFirstSearch' graph Set.empty $ 0
-                         
+depthFirstSearch graph = depthFirstSearch' graph (Set.fromList [0..(length . edges $ graph) - 1]) $ 0
   where
-    depthFirstSearch' graph visitedNodes time =
-      let node = unvisitedNode graph visitedNodes          
-      in case traceShow node node of
-        Nothing -> ([], time, visitedNodes)
+    depthFirstSearch' graph unvisitedNodes time =
+      let node = if Set.null unvisitedNodes then Nothing else Just . Set.elemAt 0 $ unvisitedNodes
+      in case node of
+        Nothing -> ([], time, unvisitedNodes)
         Just n ->
-          let rootVisitedNodes = Set.insert n visitedNodes
-              (results, endTime, moreVisitedNodes) = depthFirstSearchNode graph n rootVisitedNodes time
+          let rootUnVisitedNodes = Set.delete n unvisitedNodes
+              (results, endTime, moreUnVisitedNodes) = depthFirstSearchNode graph n rootUnVisitedNodes time
               -- recursively take care of connected-components
-              (moreResults, endTime', moreVisitedNodes') = depthFirstSearch' graph moreVisitedNodes endTime
-          in (results ++ moreResults, endTime', moreVisitedNodes')
+              (moreResults, endTime', moreUnVisitedNodes') = depthFirstSearch' graph moreUnVisitedNodes endTime
+          in (results ++ moreResults, endTime', moreUnVisitedNodes')
 
 
 depthFirstSearchNode :: Graph -> NodeId -> Set.Set NodeId -> Int -> ([DFSResult], Int, Set.Set NodeId)
-depthFirstSearchNode graph nodeId visitedNodes time =
+depthFirstSearchNode graph nodeId unvisitedNodes time =
   let edges = edgesOfNode nodeId graph
-      (result, endTime, allVisitedNodes) =
-        Maybe.maybe ([], time + 1, visitedNodes) walkOverEdges edges
-  in traceShow result (DFSResult nodeId time endTime : result, endTime + 1, allVisitedNodes)
+      (result, endTime, allUnVisitedNodes) =
+        Maybe.maybe ([], time + 1, unvisitedNodes) walkOverEdges edges
+  in (DFSResult nodeId time endTime : result, endTime + 1, allUnVisitedNodes)
 
   where
     walkOverEdges edges =
       DL.foldl' (\ acc@(results, time, visitedNodesTill) edgeNodeId ->
-                  if not . Set.member edgeNodeId $ visitedNodesTill
-                  then let (moreResults, endTime, moreVisitedNodes) = depthFirstSearchNode graph edgeNodeId (Set.insert edgeNodeId visitedNodesTill) time
+                  if Set.member edgeNodeId $ visitedNodesTill
+                  then let (moreResults, endTime, moreVisitedNodes) = depthFirstSearchNode graph edgeNodeId (Set.delete edgeNodeId visitedNodesTill) time
                        in (results ++ moreResults, endTime, moreVisitedNodes)
                   else acc)
-                ([], time + 1, visitedNodes)
+                ([], time + 1, unvisitedNodes)
                 edges
-
-unvisitedNode :: Graph -> Set.Set NodeId -> Maybe NodeId
-unvisitedNode graph visitedNodes =
-  DL.foldr (\ nodeId resNodeId ->
-            if not . Set.member nodeId $ visitedNodes
-            then Just nodeId
-            else resNodeId)
-           Nothing
-           [0 .. (length . edges $ graph) - 1]
