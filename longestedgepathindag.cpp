@@ -16,6 +16,7 @@ struct Node
 
 template <class T>
 void print(const T & sourceNodes) {
+  std::cout << std::endl;
   for (const auto & i: sourceNodes)
     std::cout << i << ' ';
   std::cout << std::endl;
@@ -36,7 +37,8 @@ struct DfsData
   }
 };
 
-DfsData dfs(int node, const std::vector<Node> & graph) ;
+DfsData dfs(int node, const std::vector<Node> & graph);
+bool isValidPath(const std::vector<int> & path, const std::vector<Node> & graph, int width);
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -136,7 +138,6 @@ int main(int argc, char *argv[]) {
     auto dfsData = dfs(sourceNode, graph);
     // drop is taken from source height to lowest drop to which i could go in dfs.
     dfsData.drop = graph[sourceNode].height - dfsData.drop;
-    dfsData.path.push_back(sourceNode);
     if (maxDepthAndDrop < dfsData) {
       maxDepthAndDrop = dfsData;
     }
@@ -147,6 +148,7 @@ int main(int argc, char *argv[]) {
   for (auto p : maxDepthAndDrop.path) {
     cout << graph[p].height << " ";
   }
+  cout << "Valid path: " << (isValidPath(maxDepthAndDrop.path, graph, newWidth) ? "true"  : "false");
   return 0;
 }
 
@@ -166,4 +168,21 @@ DfsData dfs(int node, const std::vector<Node> & graph) {
   maxDepthAndDrop.depth += 1; // for myself.
   maxDepthAndDrop.path.push_back(node);
   return maxDepthAndDrop;
+}
+
+bool isValidPath(const std::vector<int> & path, const std::vector<Node> & graph, int width) {
+  for (int i = 1; i < path.size(); ++i) {
+    int diffPath = path[i] - path[i-1];
+    if (!((diffPath == width) || // down.
+	  (diffPath == -width) || // up
+	  ((diffPath == 1) && (path[i] % width != 0)) || // left
+	  ((diffPath == -1) && (path[i] % width != (width - 1))))  // right
+	|| (graph[path[i]].height <= graph[path[i-1]].height)) // height should increase always.
+      {
+	std::cout << std::endl << "Bad path: " << path[i-1] << " " << path[i] ;
+	return false;
+      }
+  }
+
+  return true;
 }

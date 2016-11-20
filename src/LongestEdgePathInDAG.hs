@@ -33,6 +33,7 @@ type SourceNodes = [NodeId]
 data LongestEdgePath = LongestEdgePath
                        { pathLength :: !Int
                        , verticalDrop :: !Int
+                       , path :: [NodeId]
                        } deriving (Eq, Ord, Show)
 
 edgesOfNode :: NodeId -> DAG -> [NodeId]
@@ -50,7 +51,7 @@ nodeData nodeId graph =
 
 longestEdgePath :: SourceNodes -> DAG -> LongestEdgePath
 longestEdgePath sourceNodes graph =
-  DL.foldl' longestPath' (LongestEdgePath 0 0) sourceNodes
+  DL.foldl' longestPath' (LongestEdgePath 0 0 []) sourceNodes
   where
     longestPath' longPathTillNow nodeId =
       let nodeLongPath = longestPath nodeId
@@ -64,17 +65,21 @@ longestEdgePath sourceNodes graph =
       let (l, lowestVal) = depthFromNode nodeId graph
       in l { verticalDrop = heightOfDagNode nodeId - lowestVal }
 
-    depthFromNode nodeId graph = DL.foldl' (goInDepth nodeId) (LongestEdgePath 1 0, heightOfDagNode nodeId) $ edgesOfNode nodeId graph
+    depthFromNode nodeId graph = DL.foldl' (goInDepth nodeId) (LongestEdgePath 1 0 [nodeId], heightOfDagNode nodeId) $ edgesOfNode nodeId graph
 
     heightOfDagNode nodeId = heightOfNode . nodeData nodeId $ graph
 
-    goInDepth nodeId pathTillNow@(LongestEdgePath !l h, lowestVal) nextNodeId =
+    goInDepth nodeId pathTillNow@(LongestEdgePath !l _ _, lowestVal) nextNodeId =
       let (newPath, lowVal) = depthFromNode nextNodeId graph
-      in case compare (1 + (pathLength newPath)) l of
+          newLen = 1 + (pathLength newPath)
+          retPath = newPath { pathLength = newLen
+                            , path = (nodeId : (path newPath))
+                            }
+      in case compare newLen l of
            LT -> pathTillNow
-           GT -> (LongestEdgePath (1 + (pathLength newPath)) 0, lowVal)
+           GT -> ( retPath, lowVal )
            EQ -> if lowVal < lowestVal
-                 then (LongestEdgePath (1 + (pathLength newPath)) 0, lowVal)
+                 then (retPath, lowVal )
                  else pathTillNow
 
 makeEdge :: NodeId -> NodeId -> DAG -> DAG
@@ -84,13 +89,13 @@ makeEdge fromId toId graph =
   in graph { outGoingEdges = Map.insert fromId newEdges (outGoingEdges graph) }
 
 -- SourceNodes are nodes that have no incoming edges.
-makeDAG :: DAGDataPath -> IO (DAG, SourceNodes)
+makeDAG :: DAGDataPath -> IO (DAG, SourceNodes, Int, Int)
 makeDAG filepath = do
   listOfListOfInts <- makeInteger <$> readLines filepath
   let [width, height] = head listOfListOfInts
       numNodes = width * height
       rows = (replicate width 1501) : (drop 1 listOfListOfInts) ++ [(replicate width 1501)]
-      heightsWithNodeIdsRows = force . fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [1..]) $ zip rows [1..]
+      heightsWithNodeIdsRows = force . fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [0..]) $ zip rows [0..]
       emptyGraph = AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = Set.empty
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
@@ -99,25 +104,26 @@ makeDAG filepath = do
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
   -- traceShow sourceNodes (return (Set.toList sourceNodes))
-  return (graph, force $ Set.toList sourceNodes)
+  return (graph, force $ Set.toList sourceNodes, width, height)
 
   where
     makeGraph (graphTillNow, nodesWithInEdges) (prevRow, row, nextRow) =
       let updownEdges = zip3 prevRow row nextRow
           (graph', nodesInEdges') = addEdges (graphTillNow, nodesWithInEdges) updownEdges
-          leftRightEdges = zip3 ((1501, 0) : row) (drop 1 row) (drop 2 row)
+          leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
           (graph'', nodesInEdges'') = addEdges (graph', nodesInEdges') leftRightEdges
       in (force graph'', force nodesInEdges'')
-    addEdges (g, n) edges =
-      DL.foldl' (\ (!g', !n') ((p, pId), (c, cId), (n, nId)) ->
-                  let (g'', n'') = if c > p
+
+    addEdges (gInit, nInit) edges =
+      DL.foldl' (\ (!g', !n') ((pH, pId), (cH, cId), (nH, nId)) ->
+                  let (g'', n'') = if cH > pH
                                    then (makeEdge cId pId g', Set.insert pId n')
                                    else (g', n')
-                      (g''', n''') = if c > n
+                      (g''', n''') = if cH > nH
                                      then (makeEdge cId nId g'', Set.insert nId n'')
                                      else (g'', n'')
                   in (g''', n'''))
-                (g, n)
+                (gInit, nInit)
                 edges
 
 readLines :: FilePath -> IO [String]
@@ -131,5 +137,25 @@ makeInteger = force . fmap getInts . makeWords
 
 longestPath :: DAGDataPath -> IO LongestEdgePath
 longestPath filepath = do
-  (graph, sourceNodes) <- makeDAG filepath
-  return $ longestEdgePath sourceNodes graph
+  (graph, sourceNodes, width, height) <- makeDAG filepath
+  let l = longestEdgePath sourceNodes graph
+      p = reverse $ path l
+      coords = fmap (flip quotRem width) . fmap (flip (-) width) $ p
+      cs = fmap show coords
+      heights = fmap (heightOfNode . flip nodeData graph) p
+      isValid = isValidPath p graph (width, height)
+      graphNodes = fmap (flip edgesOfNode graph) p
+  return $ traceShow (cs, heights, isValid, graphNodes) l
+
+isValidPath :: [NodeId] -> DAG -> (Int, Int) -> Bool
+isValidPath path graph (width, height) =
+  let heights = fmap (heightOfNode . flip nodeData graph) path
+      incOrderHeights = any (\(a,b) -> a <= b) $ zip heights (drop 1 heights)
+      validTransitions = all (isValidTransition width) $ zip path (drop 1 path)
+  in incOrderHeights && validTransitions
+  where
+    isValidTransition width (nodeId1, nodeId2) =
+      case nodeId1 - nodeId2 of
+        1 -> nodeId1 `mod` width /= 0 -- left
+        -1 -> nodeId1 `mod` width /= (width - 1) -- right
+        w -> (w == -width) || (w == width) --up/down
