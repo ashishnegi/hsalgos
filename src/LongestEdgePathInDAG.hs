@@ -7,7 +7,6 @@ import Data.Set as Set
 import Data.Maybe as Maybe
 import Debug.Trace
 import Control.DeepSeq
--- import Data.Text.Lazy.IO as TIO
 
 type OutGoingEdges = Map.Map NodeId [ NodeId ]
 type NodesData = Map.Map NodeId Node
@@ -17,9 +16,15 @@ data DAG = AdjList
            , nodesData :: NodesData
            } deriving (Eq, Show)
 
+instance NFData DAG where
+  rnf dag = rnf (outGoingEdges dag) `seq` rnf (nodesData dag)
+
 data Node = Node
             { heightOfNode :: !Int
             } deriving (Eq, Show)
+
+instance NFData Node where
+  rnf node = rnf (heightOfNode node)
 
 type NodeId = Int
 type DAGDataPath = String
@@ -62,7 +67,8 @@ longestEdgePath sourceNodes graph =
     depthFromNode nodeId graph = DL.foldl' (goInDepth nodeId) (LongestEdgePath 1 0, heightOfDagNode nodeId) $ edgesOfNode nodeId graph
 
     heightOfDagNode nodeId = heightOfNode . nodeData nodeId $ graph
-    goInDepth nodeId !pathTillNow@(LongestEdgePath l h, lowestVal) nextNodeId =
+
+    goInDepth nodeId pathTillNow@(LongestEdgePath !l h, lowestVal) nextNodeId =
       let (newPath, lowVal) = depthFromNode nextNodeId graph
       in case compare (1 + (pathLength newPath)) l of
            LT -> pathTillNow
@@ -84,8 +90,7 @@ makeDAG filepath = do
   let [width, height] = head listOfListOfInts
       numNodes = width * height
       rows = (replicate width 1501) : (drop 1 listOfListOfInts) ++ [(replicate width 1501)]
-      -- id generation was wrong.
-      heightsWithNodeIdsRows = fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [1..]) $ zip rows [1..]
+      heightsWithNodeIdsRows = force . fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [1..]) $ zip rows [1..]
       emptyGraph = AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = Set.empty
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
@@ -94,17 +99,17 @@ makeDAG filepath = do
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
   -- traceShow sourceNodes (return (Set.toList sourceNodes))
-  return $ (graph, Set.toList sourceNodes)
+  return (graph, force $ Set.toList sourceNodes)
 
   where
     makeGraph (graphTillNow, nodesWithInEdges) (prevRow, row, nextRow) =
       let updownEdges = zip3 prevRow row nextRow
-          (graph', nodesInEdges') =  addEdges (graphTillNow, nodesWithInEdges) updownEdges
+          (graph', nodesInEdges') = addEdges (graphTillNow, nodesWithInEdges) updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) (drop 1 row) (drop 2 row)
           (graph'', nodesInEdges'') = addEdges (graph', nodesInEdges') leftRightEdges
-      in (graph'', nodesInEdges'')
+      in (force graph'', force nodesInEdges'')
     addEdges (g, n) edges =
-      DL.foldl' (\ !(!g', !n') ((p, pId), (c, cId), (n, nId)) ->
+      DL.foldl' (\ (!g', !n') ((p, pId), (c, cId), (n, nId)) ->
                   let (g'', n'') = if c > p
                                    then (makeEdge cId pId g', Set.insert pId n')
                                    else (g', n')
@@ -119,12 +124,12 @@ readLines :: FilePath -> IO [String]
 readLines = fmap lines . readFile
 
 makeInteger :: [String] -> [[Int]]
-makeInteger = (\x -> deepseq x x) . fmap getInts . makeWords
+makeInteger = force . fmap getInts . makeWords
   where
     getInts = fmap read
     makeWords = fmap words
 
 longestPath :: DAGDataPath -> IO LongestEdgePath
 longestPath filepath = do
-  !(!graph, !sourceNodes) <- makeDAG filepath
-  return $ LongestEdgePath 0 0 -- longestEdgePath sourceNodes graph
+  (graph, sourceNodes) <- makeDAG filepath
+  return $ longestEdgePath sourceNodes graph
