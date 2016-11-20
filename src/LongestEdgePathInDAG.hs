@@ -92,9 +92,9 @@ makeEdge fromId toId graph =
 makeDAG :: DAGDataPath -> IO (DAG, SourceNodes, Int, Int)
 makeDAG filepath = do
   listOfListOfInts <- makeInteger <$> readLines filepath
-  let [width, height] = head listOfListOfInts
+  let ([width, height] : mainData) = listOfListOfInts
       numNodes = width * height
-      rows = (replicate width 1501) : (drop 1 listOfListOfInts) ++ [(replicate width 1501)]
+      rows = (replicate width 1501) : mainData ++ [(replicate width 1501)]
       heightsWithNodeIdsRows = force . fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [0..]) $ zip rows [0..]
       emptyGraph = AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = Set.empty

@@ -6,6 +6,19 @@
 #include <numeric>
 #include <algorithm>
 
+// Solution for : http://geeks.redmart.com/2015/01/07/skiing-in-singapore-a-coding-diversion/
+// All areas are nodes. There is a directed edge between two adjacent nodes (node1 -> node2)
+// if node1 has higher elevation than node2.
+// Problem is converted into a DAG and Dfs is run on it from all nodes which do not have any incoming edges
+// and maximum depth covered with lowest drop value is taken as result.
+
+// compile and run :
+// g++ --std=c++14 cpp/LongestEdgePathDag.cpp -o longest
+// time ./longest map.txt
+
+/*
+  Node stores its height and list of outgoing-edges from itself.
+ */
 struct Node
 {
   int height;
@@ -14,22 +27,18 @@ struct Node
   Node() : height(0), outGoingEdges(std::vector<int>()) {}
 };
 
-template <class T>
-void print(const T & sourceNodes) {
-  std::cout << std::endl;
-  for (const auto & i: sourceNodes)
-    std::cout << i << ' ';
-  std::cout << std::endl;
-}
-
-struct DfsData
+/*
+  DfsResult : Result of a dfs call on a node;
+ */
+struct DfsResult
 {
-  int depth;
-  int drop;
-  std::vector<int> path;
-  DfsData(int d, int dr) : depth(d), drop(dr) {}
+  int depth; // depth uptill which dfs went.
+  int drop; // lowest drop-value that it found.
+  std::vector<int> path; // path that dfs took
+  DfsResult(int d, int dr) : depth(d), drop(dr) {}
 
-  bool operator<(const DfsData & d2) const {
+  // DfsResult maximizes depth and minimizes drop
+  bool operator<(const DfsResult & d2) const {
     if (depth == d2.depth) {
       return drop > d2.drop;
     }
@@ -37,8 +46,18 @@ struct DfsData
   }
 };
 
-DfsData dfs(int node, const std::vector<Node> & graph);
+// for some debugging
+template <class T> void print(const T & sourceNodes);
+
+// api to do the depth-first-search
+DfsResult dfs(int node, const std::vector<Node> & graph);
+
+// test if answer has a valid path or not
 bool isValidPath(const std::vector<int> & path, const std::vector<Node> & graph, int width);
+
+// Generates the graph, set of nodes with incoming edges and list of all ids.
+void generateGraphData(const std::vector< std::vector<int> > & rawData, const int width, const int height,
+		       std::vector<Node> & graph, std::set<int> & nodesWithInEdges, std::vector<int> & allIds);
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -77,10 +96,99 @@ int main(int argc, char *argv[]) {
   // which have lower height that itself.
   // id of each node is its-row * width + its-col
   int newWidth = width + 2, newHeight = height + 2;
-
   vector<Node> graph(newWidth * newHeight);
   set<int> nodesWithInEdges;
   vector<int> allIds;
+
+  // Generate the graph
+  generateGraphData(data, width, height, graph, nodesWithInEdges, allIds);
+
+  // node ids range
+  vector<int> sourceNodes(width * height);
+  vector<int>::iterator it;
+  it = set_difference(allIds.begin(), allIds.end(), nodesWithInEdges.begin(), nodesWithInEdges.end(), sourceNodes.begin());
+  sourceNodes.resize(it - sourceNodes.begin());
+
+  // print(allIds);
+  // print(nodesWithInEdges);
+  // print(sourceNodes);
+
+  // clear all the data that we do not need now.. reduce memory consumption.
+  data.clear();
+  allIds.clear();
+  nodesWithInEdges.clear();
+
+  // we have now : sourceNodes; graph : has height
+  // run the dfs on Dag
+  DfsResult maxDepthAndDrop(0,1501);
+  for (auto sourceNode : sourceNodes) {
+    auto dfsData = dfs(sourceNode, graph);
+    // drop is taken from source height to lowest drop to which i could go in dfs.
+    dfsData.drop = graph[sourceNode].height - dfsData.drop;
+    if (maxDepthAndDrop < dfsData) {
+      maxDepthAndDrop = dfsData;
+    }
+  }
+
+  // print the results.
+  cout << maxDepthAndDrop.depth << " " << maxDepthAndDrop.drop << " path: ";
+  // print(maxDepthAndDrop.path);
+  for (auto p : maxDepthAndDrop.path) {
+    cout << graph[p].height << " ";
+  }
+  cout << "\nValid path: " << (isValidPath(maxDepthAndDrop.path, graph, newWidth) ? "true"  : "false");
+  return 0;
+}
+
+
+DfsResult dfs(int node, const std::vector<Node> & graph) {
+  using namespace std;
+  auto edges = graph[node].outGoingEdges;
+
+  DfsResult maxDepthAndDrop(0, graph[node].height);
+  for (auto edge : edges) {
+    DfsResult edgeData = dfs(edge, graph);
+    if (maxDepthAndDrop < edgeData) {
+      maxDepthAndDrop = edgeData;
+    }
+  }
+
+  maxDepthAndDrop.depth += 1; // for myself.
+  maxDepthAndDrop.path.push_back(node);
+  return maxDepthAndDrop;
+}
+
+bool isValidPath(const std::vector<int> & path, const std::vector<Node> & graph, int width) {
+  for (int i = 1; i < path.size(); ++i) {
+    int diffPath = path[i] - path[i-1];
+    if (!((diffPath == width) || // down.
+	  (diffPath == -width) || // up
+	  ((diffPath == 1) && (path[i] % width != 0)) || // left
+	  ((diffPath == -1) && (path[i] % width != (width - 1))))  // right
+	|| (graph[path[i]].height <= graph[path[i-1]].height)) // height should increase always.
+      {
+	std::cout << std::endl << "Bad path: " << path[i-1] << " " << path[i] ;
+	return false;
+      }
+  }
+
+  return true;
+}
+
+template <class T> void print(const T & sourceNodes)
+{
+  std::cout << std::endl;
+  for (const auto & i: sourceNodes)
+    std::cout << i << ' ';
+  std::cout << std::endl;
+}
+
+void generateGraphData(const std::vector< std::vector<int> > & data,
+		       const int width, const int height,
+		       std::vector<Node> & graph,
+		       std::set<int> & nodesWithInEdges,
+		       std::vector<int> & allIds) {
+  int newWidth = width + 2, newHeight = height + 2;
 
   for (int r=1; r <= height; ++r) {
     for (int c=1; c <= width; ++c) {
@@ -114,75 +222,4 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
-  // node ids range
-  vector<int> sourceNodes(width * height);
-  vector<int>::iterator it;
-  it = set_difference(allIds.begin(), allIds.end(), nodesWithInEdges.begin(), nodesWithInEdges.end(), sourceNodes.begin());
-  sourceNodes.resize(it - sourceNodes.begin());
-
-  // so now sourceNodes contain from which dfs can start.
-
-  // print(allIds);
-  // print(nodesWithInEdges);
-  // print(sourceNodes);
-
-  data.clear();
-  allIds.clear();
-  nodesWithInEdges.clear();
-
-  // sourceNodes; graph : has height
-
-  DfsData maxDepthAndDrop(0,1501);
-  for (auto sourceNode : sourceNodes) {
-    auto dfsData = dfs(sourceNode, graph);
-    // drop is taken from source height to lowest drop to which i could go in dfs.
-    dfsData.drop = graph[sourceNode].height - dfsData.drop;
-    if (maxDepthAndDrop < dfsData) {
-      maxDepthAndDrop = dfsData;
-    }
-  }
-
-  cout << maxDepthAndDrop.depth << " " << maxDepthAndDrop.drop << " path: ";
-  print(maxDepthAndDrop.path);
-  for (auto p : maxDepthAndDrop.path) {
-    cout << graph[p].height << " ";
-  }
-  cout << "Valid path: " << (isValidPath(maxDepthAndDrop.path, graph, newWidth) ? "true"  : "false");
-  return 0;
-}
-
-
-DfsData dfs(int node, const std::vector<Node> & graph) {
-  using namespace std;
-  auto edges = graph[node].outGoingEdges;
-
-  DfsData maxDepthAndDrop(0, graph[node].height);
-  for (auto edge : edges) {
-    DfsData edgeData = dfs(edge, graph);
-    if (maxDepthAndDrop < edgeData) {
-      maxDepthAndDrop = edgeData;
-    }
-  }
-
-  maxDepthAndDrop.depth += 1; // for myself.
-  maxDepthAndDrop.path.push_back(node);
-  return maxDepthAndDrop;
-}
-
-bool isValidPath(const std::vector<int> & path, const std::vector<Node> & graph, int width) {
-  for (int i = 1; i < path.size(); ++i) {
-    int diffPath = path[i] - path[i-1];
-    if (!((diffPath == width) || // down.
-	  (diffPath == -width) || // up
-	  ((diffPath == 1) && (path[i] % width != 0)) || // left
-	  ((diffPath == -1) && (path[i] % width != (width - 1))))  // right
-	|| (graph[path[i]].height <= graph[path[i-1]].height)) // height should increase always.
-      {
-	std::cout << std::endl << "Bad path: " << path[i-1] << " " << path[i] ;
-	return false;
-      }
-  }
-
-  return true;
 }
