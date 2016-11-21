@@ -6,11 +6,11 @@
 #include <numeric>
 #include <algorithm>
 
-// Solution for : http://geeks.redmart.com/2015/01/07/skiing-in-singapore-a-coding-diversion/
+// Solution for : skiing in singapore
 // All areas are nodes. There is a directed edge between two adjacent nodes (node1 -> node2)
 // if node1 has higher elevation than node2.
 // Problem is converted into a DAG and Dfs is run on it from all nodes which do not have any incoming edges
-// and maximum depth covered with lowest drop value is taken as result.
+// and maximum depth covered with highest drop value is taken as result.
 
 // compile and run :
 // g++ --std=c++14 cpp/LongestEdgePathDag.cpp -o longest
@@ -33,14 +33,14 @@ struct Node
 struct DfsResult
 {
   int depth; // depth uptill which dfs went.
-  int drop; // lowest drop-value that it found.
+  int drop; // highest drop-value that it found.
   std::vector<int> path; // path that dfs took
   DfsResult(int d, int dr) : depth(d), drop(dr) {}
 
-  // DfsResult maximizes depth and minimizes drop
+  // DfsResult maximizes depth and drop
   bool operator<(const DfsResult & d2) const {
     if (depth == d2.depth) {
-      return drop > d2.drop;
+      return drop < d2.drop;
     }
     return depth < d2.depth;
   }
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 
   // we have now : sourceNodes; graph : has height
   // run the dfs on Dag
-  DfsResult maxDepthAndDrop(0,1501);
+  DfsResult maxDepthAndDrop(0,0);
   for (auto sourceNode : sourceNodes) {
     auto dfsData = dfs(sourceNode, graph);
     // drop is taken from source height to lowest drop to which i could go in dfs.
@@ -140,15 +140,25 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+// Drop is overloaded term : while in dfs it means lowest drop-height
+// and after dfs result it means vertical-drop that we took.
+bool compareDepthAndDrop(const DfsResult & d1, const DfsResult & d2) {
+  // maximize depth and take lowest height that we could reach.
+  if (d1.depth == d2.depth) {
+    return d1.drop > d2.drop;
+  }
+  return d1.depth < d2.depth;
+}
 
 DfsResult dfs(int node, const std::vector<Node> & graph) {
   using namespace std;
   auto edges = graph[node].outGoingEdges;
 
+  // we store lowest height that we could reach from this node.
   DfsResult maxDepthAndDrop(0, graph[node].height);
   for (auto edge : edges) {
     DfsResult edgeData = dfs(edge, graph);
-    if (maxDepthAndDrop < edgeData) {
+    if (compareDepthAndDrop(maxDepthAndDrop, edgeData)) {
       maxDepthAndDrop = edgeData;
     }
   }

@@ -57,7 +57,11 @@ longestEdgePath sourceNodes graph =
       let nodeLongPath = longestPath nodeId
       in if pathLength nodeLongPath > pathLength longPathTillNow
          then nodeLongPath
-         else longPathTillNow
+         else if pathLength nodeLongPath == pathLength longPathTillNow
+              then if verticalDrop nodeLongPath > verticalDrop longPathTillNow
+                   then nodeLongPath
+                   else longPathTillNow
+              else longPathTillNow
 
     longestPath nodeId =
       -- this is dfs from this node
@@ -145,7 +149,7 @@ longestPath filepath = do
       heights = fmap (heightOfNode . flip nodeData graph) p
       isValid = isValidPath p graph (width, height)
       graphNodes = fmap (flip edgesOfNode graph) p
-  return $ traceShow (cs, heights, isValid, graphNodes) l
+  return $ traceShow (cs, heights, isValid) l
 
 isValidPath :: [NodeId] -> DAG -> (Int, Int) -> Bool
 isValidPath path graph (width, height) =
