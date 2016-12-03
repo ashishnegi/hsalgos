@@ -106,15 +106,16 @@ makeDAG filepath = do
         -- $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = Set.empty
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
-      (graph, nodesWithInEdges) = force $ DL.foldl' makeGraph (emptyGraph, emptyNodesWithEdges) threeRowsInOneGo
+      (graph, nodesWithInEdges) = force $ traceShow "calling foldl'" $ DL.foldl' makeGraph (emptyGraph, emptyNodesWithEdges) threeRowsInOneGo
       sourceNodes = Set.difference (Set.fromList . Map.keys . nodesData $ graph) nodesWithInEdges
+
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
-  -- traceShow sourceNodes (return (Set.toList sourceNodes))
+  traceShow "before returning makeDAG" $ return ""
   return (force (graph, Set.toList sourceNodes, width, height))
 
   where
-    makeGraph (graphTillNow, nodesWithInEdges) (prevRow, row, nextRow) =
+    makeGraph (!graphTillNow, !nodesWithInEdges) (prevRow, row, nextRow) =
       let updownEdges = zip3 prevRow row nextRow
           (graph', nodesInEdges') = addEdges (graphTillNow, nodesWithInEdges) updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
@@ -152,7 +153,7 @@ longestPath filepath = do
       heights = fmap (heightOfNode . flip nodeData graph) p
       isValid = isValidPath p graph (width, height)
       graphNodes = fmap (flip edgesOfNode graph) p
-  return $ traceShow (cs, heights, isValid) l
+  return $ traceShow ("in longestPath: ", cs, heights, isValid) l
 
 isValidPath :: [NodeId] -> DAG -> (Int, Int) -> Bool
 isValidPath path graph (width, height) =
