@@ -101,13 +101,14 @@ makeDAG filepath = do
       -- take nRows as height and nCols as width
       mainData = fmap (take width) . take height $ mainData'
       rows = (replicate width 1501) : mainData ++ [(replicate width 1501)]
-      heightsWithNodeIdsRows = force . fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [0..]) $ zip rows [0..]
-      emptyGraph = AdjList Map.empty Map.empty
-        -- $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
-      emptyNodesWithEdges = Set.empty
+      heightsWithNodeIdsRows = force $ fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [0..]) $ zip rows [0..]
+      emptyGraph = []
+      -- AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
+      emptyNodesWithEdges = [] -- this is bad : Set would be efficient ; but it is taking too much of memory.
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
-      (graph, nodesWithInEdges) = force $ traceShow "calling foldl'" $ DL.foldl' makeGraph (emptyGraph, emptyNodesWithEdges) threeRowsInOneGo
-      sourceNodes = Set.difference (Set.fromList . Map.keys . nodesData $ graph) nodesWithInEdges
+      (allEdges, nodesWithInEdges, allNodes) = DL.foldr makeGraph (emptyGraph, emptyNodesWithEdges, []) threeRowsInOneGo
+      graph = AdjList (Map.unions (fmap Map.fromDistinctAscList allEdges)) (Map.unions (fmap Map.fromDistinctAscList allNodes))
+      sourceNodes = Set.difference (Set.fromList . Map.keys . nodesData $ graph) (Set.unions nodesWithInEdges)
 
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
@@ -115,23 +116,25 @@ makeDAG filepath = do
   return (force (graph, Set.toList sourceNodes, width, height))
 
   where
-    makeGraph (!graphTillNow, !nodesWithInEdges) (prevRow, row, nextRow) =
+    makeGraph (prevRow, row, nextRow) (!edgeTillNow, nodesWithInEdges, !allNodes) =
       let updownEdges = zip3 prevRow row nextRow
-          (graph', nodesInEdges') = addEdges (graphTillNow, nodesWithInEdges) updownEdges
+          (edges', nodesInEdges', _) = addEdges ([], [], []) updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
-          (graph'', nodesInEdges'') = addEdges (graph', nodesInEdges') leftRightEdges
-      in (force (graph'', nodesInEdges''))
+          (edges'', nodesInEdges'', allNodes') = addEdges ([], [], []) leftRightEdges
+          allEdges = force $ zipWith (\(k, a) (_, b) -> (k, a ++ b)) edges' edges''
+          allNodesInEdges = force $ Set.union (Set.fromList nodesInEdges') (Set.fromList nodesInEdges'')
+      in (allEdges : edgeTillNow, allNodesInEdges : nodesWithInEdges, allNodes' : allNodes)
 
-    addEdges (gInit, nInit) edges =
-      DL.foldl' (\ (!g', !n') ((pH, pId), (cH, cId), (nH, nId)) ->
+    addEdges (!gInit, nInit, allNodes) edges =
+      DL.foldr (\ ((pH, pId), (cH, cId), (nH, nId)) (!g', !n', !allNodes') ->
                   let (g'', n'') = if cH > pH
-                                   then (makeEdge cId pId g', Set.insert pId n')
-                                   else (g', n')
+                                   then ([pId], pId : n')
+                                   else ([], n')
                       (g''', n''') = if cH > nH
-                                     then (makeEdge cId nId g'', Set.insert nId n'')
+                                     then (nId : g'', nId : n'')
                                      else (g'', n'')
-                  in (g''' { nodesData = Map.insert cId (Node cH) (nodesData g''') } , n'''))
-                (gInit, nInit)
+                  in ((cId, g''') : g', n''', (cId, Node cH) : allNodes'))
+                (gInit, nInit, allNodes)
                 edges
 
 readLines :: FilePath -> IO [String]
