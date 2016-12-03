@@ -106,12 +106,12 @@ makeDAG filepath = do
         -- $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = Set.empty
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
-      (graph, nodesWithInEdges) = DL.foldl' makeGraph (emptyGraph, emptyNodesWithEdges) threeRowsInOneGo
+      (graph, nodesWithInEdges) = force $ DL.foldl' makeGraph (emptyGraph, emptyNodesWithEdges) threeRowsInOneGo
       sourceNodes = Set.difference (Set.fromList . Map.keys . nodesData $ graph) nodesWithInEdges
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
   -- traceShow sourceNodes (return (Set.toList sourceNodes))
-  return (force graph, force $ Set.toList sourceNodes, width, height)
+  return (force (graph, Set.toList sourceNodes, width, height))
 
   where
     makeGraph (graphTillNow, nodesWithInEdges) (prevRow, row, nextRow) =
@@ -119,7 +119,7 @@ makeDAG filepath = do
           (graph', nodesInEdges') = addEdges (graphTillNow, nodesWithInEdges) updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
           (graph'', nodesInEdges'') = addEdges (graph', nodesInEdges') leftRightEdges
-      in (force graph'', force nodesInEdges'')
+      in (force (graph'', nodesInEdges''))
 
     addEdges (gInit, nInit) edges =
       DL.foldl' (\ (!g', !n') ((pH, pId), (cH, cId), (nH, nId)) ->
