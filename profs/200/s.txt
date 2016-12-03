@@ -1,0 +1,33 @@
+map.txt
+(["(118,112)","(119,112)","(120,112)","(121,112)","(122,112)","(122,113)","(121,113)","(121,114)","(121,115)","(121,116)","(122,116)","(123,116)"],[38,185,377,591,648,813,850,987,1012,1063,1128,1477],True)
+LongestEdgePath {pathLength = 12, verticalDrop = 1439, path = [24916,24716,24516,24515,24514,24513,24713,24712,24512,24312,24112,23912]}
+  11,989,069,984 bytes allocated in the heap
+   2,877,660,784 bytes copied during GC
+      71,669,136 bytes maximum residency (90 sample(s))
+         761,552 bytes maximum slop
+             150 MB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0     23004 colls,     0 par    0.716s   0.740s     0.0000s    0.0004s
+  Gen  1        90 colls,     0 par    2.068s   2.083s     0.0231s    0.0742s
+
+  TASKS: 4 (1 bound, 3 peak workers (3 total), using -N1)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.004s  (  0.001s elapsed)
+  MUT     time    6.044s  (  8.763s elapsed)
+  GC      time    1.784s  (  1.818s elapsed)
+  RP      time    0.000s  (  0.000s elapsed)
+  PROF    time    1.000s  (  1.006s elapsed)
+  EXIT    time    0.000s  (  0.005s elapsed)
+  Total   time    9.200s  ( 10.586s elapsed)
+
+  Alloc rate    1,983,631,698 bytes per MUT second
+
+  Productivity  69.7% of total user, 60.6% of total elapsed
+
+gc_alloc_block_sync: 0
+whitehole_spin: 0
+gen[0].sync: 0
+gen[1].sync: 0

@@ -96,11 +96,14 @@ makeEdge fromId toId graph =
 makeDAG :: DAGDataPath -> IO (DAG, SourceNodes, Int, Int)
 makeDAG filepath = do
   listOfListOfInts <- makeInteger <$> readLines filepath
-  let ([width, height] : mainData) = listOfListOfInts
+  let ([width, height] : mainData') = listOfListOfInts
       numNodes = width * height
+      -- take nRows as height and nCols as width
+      mainData = fmap (take width) . take height $ mainData'
       rows = (replicate width 1501) : mainData ++ [(replicate width 1501)]
       heightsWithNodeIdsRows = force . fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [0..]) $ zip rows [0..]
-      emptyGraph = AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
+      emptyGraph = AdjList Map.empty Map.empty
+        -- $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = Set.empty
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
       (graph, nodesWithInEdges) = DL.foldl' makeGraph (emptyGraph, emptyNodesWithEdges) threeRowsInOneGo
@@ -108,7 +111,7 @@ makeDAG filepath = do
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
   -- traceShow sourceNodes (return (Set.toList sourceNodes))
-  return (graph, force $ Set.toList sourceNodes, width, height)
+  return (force graph, force $ Set.toList sourceNodes, width, height)
 
   where
     makeGraph (graphTillNow, nodesWithInEdges) (prevRow, row, nextRow) =
@@ -126,7 +129,7 @@ makeDAG filepath = do
                       (g''', n''') = if cH > nH
                                      then (makeEdge cId nId g'', Set.insert nId n'')
                                      else (g'', n'')
-                  in (g''', n'''))
+                  in (g''' { nodesData = Map.insert cId (Node cH) (nodesData g''') } , n'''))
                 (gInit, nInit)
                 edges
 
@@ -134,7 +137,7 @@ readLines :: FilePath -> IO [String]
 readLines = fmap lines . readFile
 
 makeInteger :: [String] -> [[Int]]
-makeInteger = force . fmap getInts . makeWords
+makeInteger = fmap getInts . makeWords
   where
     getInts = fmap read
     makeWords = fmap words

@@ -1,0 +1,166 @@
+	Sat Dec  3 11:23 2016 Time and Allocation Profiling Report  (Final)
+
+	   hsalgos-exe +RTS -N -hc -s -p -RTS
+
+	total time  =        5.51 secs   (5513 ticks @ 1000 us, 1 processor)
+	total alloc = 6,967,003,008 bytes  (excludes profiling overheads)
+
+COST CENTRE           MODULE                %time %alloc
+
+makeInteger.getInts   LongestEdgePathInDAG   85.3   81.2
+makeInteger.makeWords LongestEdgePathInDAG    7.9    7.7
+readLines             LongestEdgePathInDAG    4.8   10.3
+
+
+                                                                                           individual      inherited
+COST CENTRE                                     MODULE                  no.     entries  %time %alloc   %time %alloc
+
+MAIN                                            MAIN                     56          0    0.0    0.0   100.0  100.0
+ main                                           Main                    113          0    0.0    0.0   100.0  100.0
+  showsPrec                                     LongestEdgePathInDAG    247          1    0.0    0.0     0.0    0.0
+  longestPath                                   LongestEdgePathInDAG    114          1    0.0    0.0   100.0  100.0
+   longestPath.isValid                          LongestEdgePathInDAG    237          1    0.0    0.0     0.0    0.0
+    isValidPath                                 LongestEdgePathInDAG    238          1    0.0    0.0     0.0    0.0
+     isValidPath.validTransitions               LongestEdgePathInDAG    245          1    0.0    0.0     0.0    0.0
+      isValidPath.isValidTransition             LongestEdgePathInDAG    246         10    0.0    0.0     0.0    0.0
+     isValidPath.incOrderHeights                LongestEdgePathInDAG    240          1    0.0    0.0     0.0    0.0
+      isValidPath.incOrderHeights.\             LongestEdgePathInDAG    241          1    0.0    0.0     0.0    0.0
+     isValidPath.heights                        LongestEdgePathInDAG    239          1    0.0    0.0     0.0    0.0
+      heightOfNode                              LongestEdgePathInDAG    244          2    0.0    0.0     0.0    0.0
+      nodeData                                  LongestEdgePathInDAG    242          2    0.0    0.0     0.0    0.0
+       nodesData                                LongestEdgePathInDAG    243          2    0.0    0.0     0.0    0.0
+   longestPath.heights                          LongestEdgePathInDAG    233          1    0.0    0.0     0.0    0.0
+    heightOfNode                                LongestEdgePathInDAG    236         11    0.0    0.0     0.0    0.0
+    nodeData                                    LongestEdgePathInDAG    234         11    0.0    0.0     0.0    0.0
+     nodesData                                  LongestEdgePathInDAG    235         11    0.0    0.0     0.0    0.0
+   longestPath.cs                               LongestEdgePathInDAG    232          1    0.0    0.0     0.0    0.0
+   longestPath.coords                           LongestEdgePathInDAG    231          1    0.0    0.0     0.0    0.0
+   longestPath.l                                LongestEdgePathInDAG    120          1    0.0    0.0     0.2    0.1
+    longestEdgePath                             LongestEdgePathInDAG    121          1    0.0    0.0     0.2    0.1
+     longestEdgePath.longestPath'               LongestEdgePathInDAG    200       2022    0.0    0.0     0.2    0.1
+      verticalDrop                              LongestEdgePathInDAG    229          2    0.0    0.0     0.0    0.0
+      longestEdgePath.longestPath'.nodeLongPath LongestEdgePathInDAG    202       2022    0.0    0.0     0.2    0.1
+       longestEdgePath.longestPath              LongestEdgePathInDAG    203       2022    0.0    0.0     0.2    0.1
+        longestEdgePath.longestPath.lowestVal   LongestEdgePathInDAG    228       2022    0.0    0.0     0.0    0.0
+        longestEdgePath.heightOfDagNode         LongestEdgePathInDAG    224       2022    0.0    0.0     0.0    0.0
+         heightOfNode                           LongestEdgePathInDAG    227       2022    0.0    0.0     0.0    0.0
+         nodeData                               LongestEdgePathInDAG    225       2022    0.0    0.0     0.0    0.0
+          nodesData                             LongestEdgePathInDAG    226       2022    0.0    0.0     0.0    0.0
+        longestEdgePath.longestPath.(...)       LongestEdgePathInDAG    205       2022    0.0    0.0     0.2    0.1
+         longestEdgePath.depthFromNode          LongestEdgePathInDAG    206      37717    0.0    0.1     0.2    0.1
+          longestEdgePath.heightOfDagNode       LongestEdgePathInDAG    216       9289    0.0    0.0     0.0    0.0
+           heightOfNode                         LongestEdgePathInDAG    223       9289    0.0    0.0     0.0    0.0
+           nodeData                             LongestEdgePathInDAG    217       9289    0.0    0.0     0.0    0.0
+            nodesData                           LongestEdgePathInDAG    218       9289    0.0    0.0     0.0    0.0
+          longestEdgePath.goInDepth             LongestEdgePathInDAG    209      35695    0.0    0.1     0.0    0.1
+           longestEdgePath.goInDepth.lowVal     LongestEdgePathInDAG    215      21006    0.0    0.0     0.0    0.0
+           longestEdgePath.goInDepth.retPath    LongestEdgePathInDAG    214      26025    0.0    0.0     0.0    0.0
+            path                                LongestEdgePathInDAG    230         10    0.0    0.0     0.0    0.0
+           longestEdgePath.goInDepth.newLen     LongestEdgePathInDAG    212      35695    0.0    0.0     0.0    0.0
+            pathLength                          LongestEdgePathInDAG    213      35695    0.0    0.0     0.0    0.0
+           longestEdgePath.goInDepth.newPath    LongestEdgePathInDAG    211      35695    0.0    0.0     0.0    0.0
+           longestEdgePath.goInDepth.(...)      LongestEdgePathInDAG    210      35695    0.0    0.0     0.0    0.0
+          edgesOfNode                           LongestEdgePathInDAG    207      37717    0.1    0.0     0.1    0.0
+           outGoingEdges                        LongestEdgePathInDAG    208      37717    0.0    0.0     0.0    0.0
+        longestEdgePath.longestPath.l           LongestEdgePathInDAG    204       2022    0.0    0.0     0.0    0.0
+      pathLength                                LongestEdgePathInDAG    201       8078    0.0    0.0     0.0    0.0
+   longestPath.p                                LongestEdgePathInDAG    118          1    0.0    0.0     0.0    0.0
+    path                                        LongestEdgePathInDAG    119          1    0.0    0.0     0.0    0.0
+   makeDAG                                      LongestEdgePathInDAG    115          1    0.0    0.0    99.8   99.9
+    makeDAG.nodesWithInEdges                    LongestEdgePathInDAG    199          1    0.0    0.0     0.0    0.0
+    makeDAG.emptyGraph                          LongestEdgePathInDAG    154          1    0.0    0.0     0.0    0.0
+     makeDAG.emptyGraph.\                       LongestEdgePathInDAG    190      10000    0.0    0.0     0.0    0.0
+    makeDAG.(...)                               LongestEdgePathInDAG    144          1    0.0    0.0     1.3    0.6
+     makeDAG.makeGraph                          LongestEdgePathInDAG    145        100    0.2    0.0     1.3    0.6
+      makeDAG.makeGraph.nodesInEdges''          LongestEdgePathInDAG    193        100    0.0    0.0     0.0    0.0
+      rnf                                       LongestEdgePathInDAG    174        100    0.7    0.0     0.7    0.0
+       rnf                                      LongestEdgePathInDAG    191    1000000    0.1    0.0     0.1    0.0
+        heightOfNode                            LongestEdgePathInDAG    192    1000000    0.0    0.0     0.0    0.0
+       nodesData                                LongestEdgePathInDAG    188        100    0.0    0.0     0.0    0.0
+       outGoingEdges                            LongestEdgePathInDAG    175        100    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.nodesInEdges'           LongestEdgePathInDAG    164        100    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.(...)                   LongestEdgePathInDAG    152        100    0.0    0.0     0.2    0.3
+       makeDAG.addEdges                         LongestEdgePathInDAG    153        100    0.0    0.0     0.2    0.3
+        makeDAG.addEdges.\                      LongestEdgePathInDAG    156      10000    0.0    0.0     0.2    0.3
+         makeDAG.addEdges.\.n''                 LongestEdgePathInDAG    162      10000    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.n'''                LongestEdgePathInDAG    161      10000    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.(...)               LongestEdgePathInDAG    160      10000    0.0    0.1     0.1    0.1
+          makeEdge                              LongestEdgePathInDAG    194       4927    0.1    0.1     0.1    0.1
+           makeEdge.existingEdges               LongestEdgePathInDAG    197       4927    0.0    0.0     0.0    0.0
+            outGoingEdges                       LongestEdgePathInDAG    198       4927    0.0    0.0     0.0    0.0
+           outGoingEdges                        LongestEdgePathInDAG    196       4927    0.0    0.0     0.0    0.0
+           makeEdge.newEdges                    LongestEdgePathInDAG    195       4927    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.g''                 LongestEdgePathInDAG    159      10000    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.(...)               LongestEdgePathInDAG    158      10000    0.0    0.1     0.1    0.1
+          makeEdge                              LongestEdgePathInDAG    163       4963    0.0    0.1     0.0    0.1
+           makeEdge.existingEdges               LongestEdgePathInDAG    184       4963    0.0    0.0     0.0    0.0
+            outGoingEdges                       LongestEdgePathInDAG    185       4963    0.0    0.0     0.0    0.0
+           outGoingEdges                        LongestEdgePathInDAG    181       4963    0.0    0.0     0.0    0.0
+           makeEdge.newEdges                    LongestEdgePathInDAG    180       4963    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.g'''                LongestEdgePathInDAG    157      10000    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.updownEdges             LongestEdgePathInDAG    151        100    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.graph'                  LongestEdgePathInDAG    150        100    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.(...)                   LongestEdgePathInDAG    148        100    0.0    0.0     0.1    0.3
+       makeDAG.addEdges                         LongestEdgePathInDAG    149        100    0.0    0.0     0.1    0.3
+        makeDAG.addEdges.\                      LongestEdgePathInDAG    165      10000    0.0    0.0     0.1    0.3
+         makeDAG.addEdges.\.n''                 LongestEdgePathInDAG    171      10000    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.n'''                LongestEdgePathInDAG    170      10000    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.(...)               LongestEdgePathInDAG    169      10000    0.0    0.1     0.0    0.1
+          makeEdge                              LongestEdgePathInDAG    172       4973    0.0    0.1     0.0    0.1
+           makeEdge.existingEdges               LongestEdgePathInDAG    182       4973    0.0    0.0     0.0    0.0
+            outGoingEdges                       LongestEdgePathInDAG    183       4973    0.0    0.0     0.0    0.0
+           outGoingEdges                        LongestEdgePathInDAG    177       4973    0.0    0.0     0.0    0.0
+           makeEdge.newEdges                    LongestEdgePathInDAG    176       4973    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.g''                 LongestEdgePathInDAG    168      10000    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.(...)               LongestEdgePathInDAG    167      10000    0.0    0.1     0.1    0.1
+          makeEdge                              LongestEdgePathInDAG    173       4923    0.1    0.1     0.1    0.1
+           makeEdge.existingEdges               LongestEdgePathInDAG    186       4923    0.0    0.0     0.0    0.0
+            outGoingEdges                       LongestEdgePathInDAG    187       4923    0.0    0.0     0.0    0.0
+           outGoingEdges                        LongestEdgePathInDAG    179       4923    0.0    0.0     0.0    0.0
+           makeEdge.newEdges                    LongestEdgePathInDAG    178       4923    0.0    0.0     0.0    0.0
+         makeDAG.addEdges.\.g'''                LongestEdgePathInDAG    166      10000    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.leftRightEdges          LongestEdgePathInDAG    147        100    0.0    0.0     0.0    0.0
+      makeDAG.makeGraph.graph''                 LongestEdgePathInDAG    146        100    0.0    0.0     0.0    0.0
+    makeDAG.threeRowsInOneGo                    LongestEdgePathInDAG    143          1    0.0    0.0     0.0    0.0
+    makeDAG.mainData'                           LongestEdgePathInDAG    142          1    0.0    0.0     0.0    0.0
+    makeDAG.height                              LongestEdgePathInDAG    141          1    0.0    0.0     0.0    0.0
+    makeDAG.mainData                            LongestEdgePathInDAG    140          1    0.0    0.0     0.0    0.0
+    makeInteger                                 LongestEdgePathInDAG    133          0    0.5    0.0    93.6   88.9
+     makeInteger.getInts                        LongestEdgePathInDAG    137          0   85.3   81.2    85.3   81.2
+     makeInteger.makeWords                      LongestEdgePathInDAG    135          0    7.9    7.7     7.9    7.7
+    makeDAG.(...)                               LongestEdgePathInDAG    131          1    0.0    0.0     0.0    0.0
+    makeDAG.width                               LongestEdgePathInDAG    130          1    0.0    0.0     0.0    0.0
+    makeDAG.rows                                LongestEdgePathInDAG    129          1    0.0    0.0     0.0    0.0
+    makeDAG.heightsWithNodeIdsRows              LongestEdgePathInDAG    125          1    0.0    0.0     0.0    0.0
+     makeDAG.heightsWithNodeIdsRows.\           LongestEdgePathInDAG    128        102    0.0    0.0     0.0    0.0
+      makeDAG.heightsWithNodeIdsRows.\.\        LongestEdgePathInDAG    139      10200    0.0    0.0     0.0    0.0
+    makeDAG.graph                               LongestEdgePathInDAG    124          1    0.0    0.0     0.0    0.0
+    makeDAG.sourceNodes                         LongestEdgePathInDAG    122          1    0.1    0.0     0.1    0.0
+     nodesData                                  LongestEdgePathInDAG    123          1    0.0    0.0     0.0    0.0
+    readLines                                   LongestEdgePathInDAG    117          0    4.8   10.3     4.8   10.3
+ CAF                                            Main                    111          0    0.0    0.0     0.0    0.0
+  main                                          Main                    112          1    0.0    0.0     0.0    0.0
+ CAF                                            LongestEdgePathInDAG    110          0    0.0    0.0     0.0    0.0
+  showsPrec                                     LongestEdgePathInDAG    248          0    0.0    0.0     0.0    0.0
+  makeInteger                                   LongestEdgePathInDAG    132          1    0.0    0.0     0.0    0.0
+   makeInteger.getInts                          LongestEdgePathInDAG    136          1    0.0    0.0     0.0    0.0
+   makeInteger.makeWords                        LongestEdgePathInDAG    134          1    0.0    0.0     0.0    0.0
+  makeDAG                                       LongestEdgePathInDAG    126          0    0.0    0.0     0.0    0.0
+   makeDAG.emptyNodesWithEdges                  LongestEdgePathInDAG    155          1    0.0    0.0     0.0    0.0
+   makeDAG.heightsWithNodeIdsRows               LongestEdgePathInDAG    127          0    0.0    0.0     0.0    0.0
+    makeDAG.heightsWithNodeIdsRows.\            LongestEdgePathInDAG    138          0    0.0    0.0     0.0    0.0
+  readLines                                     LongestEdgePathInDAG    116          1    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Encoding         106          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Exception        105          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Handle.FD        104          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Handle.Text      103          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Show                100          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Event.Thread         97          0    0.0    0.0     0.0    0.0
+ CAF                                            Debug.Trace              96          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Encoding.Iconv    92          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.FD                89          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Handle.Internals  88          0    0.0    0.0     0.0    0.0
+ CAF                                            Text.Read.Lex            85          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Conc.Signal          83          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Event.Poll           74          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Event.EPoll          71          0    0.0    0.0     0.0    0.0
