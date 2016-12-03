@@ -106,27 +106,30 @@ makeDAG filepath = do
       -- AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
       emptyNodesWithEdges = [] -- this is bad : Set would be efficient ; but it is taking too much of memory.
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
-      (allEdges, nodesWithInEdges, allNodes) = DL.foldr makeGraph (emptyGraph, emptyNodesWithEdges, []) threeRowsInOneGo
-      graph = AdjList (Map.unions (fmap Map.fromDistinctAscList allEdges)) (Map.unions (fmap Map.fromDistinctAscList allNodes))
+      allData = fmap makeGraph threeRowsInOneGo
+      allEdges = fmap (\(a, _, _) -> a) allData
+      nodesWithInEdges = fmap (\(_, b, _) -> b) allData
+      allNodes = fmap (\(_,_,c) -> c) allData
+      graph = AdjList (Map.unions (fmap Map.fromList allEdges)) (Map.unions (fmap Map.fromList allNodes))
       sourceNodes = Set.difference (Set.fromList . Map.keys . nodesData $ graph) (Set.unions nodesWithInEdges)
 
   -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
   -- traceShow graph (return (Set.toList sourceNodes))
   traceShow "before returning makeDAG" $ return ""
-  return (force (graph, Set.toList sourceNodes, width, height))
+  return (graph, Set.toList sourceNodes, width, height)
 
   where
-    makeGraph (prevRow, row, nextRow) (!edgeTillNow, nodesWithInEdges, !allNodes) =
+    makeGraph (prevRow, row, nextRow) =
       let updownEdges = zip3 prevRow row nextRow
           (edges', nodesInEdges', _) = addEdges ([], [], []) updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
-          (edges'', nodesInEdges'', allNodes') = addEdges ([], [], []) leftRightEdges
+          (edges'', nodesInEdges'', allNodes) = addEdges ([], [], []) leftRightEdges
           allEdges = force $ zipWith (\(k, a) (_, b) -> (k, a ++ b)) edges' edges''
           allNodesInEdges = force $ Set.union (Set.fromList nodesInEdges') (Set.fromList nodesInEdges'')
-      in (allEdges : edgeTillNow, allNodesInEdges : nodesWithInEdges, allNodes' : allNodes)
+      in (allEdges, allNodesInEdges, force allNodes)
 
     addEdges (!gInit, nInit, allNodes) edges =
-      DL.foldr (\ ((pH, pId), (cH, cId), (nH, nId)) (!g', !n', !allNodes') ->
+      DL.foldl' (\ (!g', !n', !allNodes') ((pH, pId), (cH, cId), (nH, nId)) ->
                   let (g'', n'') = if cH > pH
                                    then ([pId], pId : n')
                                    else ([], n')
