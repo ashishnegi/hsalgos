@@ -12,8 +12,8 @@ type OutGoingEdges = Map.Map NodeId [ NodeId ]
 type NodesData = Map.Map NodeId Node
 
 data DAG = AdjList
-           { outGoingEdges :: OutGoingEdges
-           , nodesData :: NodesData
+           { outGoingEdges :: !OutGoingEdges
+           , nodesData :: !NodesData
            } deriving (Eq, Show)
 
 instance NFData DAG where
@@ -33,7 +33,7 @@ type SourceNodes = [NodeId]
 data LongestEdgePath = LongestEdgePath
                        { pathLength :: !Int
                        , verticalDrop :: !Int
-                       , path :: [NodeId]
+                       , path :: ![NodeId]
                        } deriving (Eq, Ord, Show)
 
 edgesOfNode :: NodeId -> DAG -> [NodeId]
