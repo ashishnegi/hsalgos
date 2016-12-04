@@ -34,7 +34,13 @@ data LongestEdgePath = LongestEdgePath
                        { pathLength :: !Int
                        , verticalDrop :: !Int
                        , path :: ![NodeId]
-                       } deriving (Eq, Ord, Show)
+                       } deriving (Show)
+
+-- ignore path in LongestEdgePath for Eq and Ord ; path is just metadata.
+instance Eq LongestEdgePath where
+  (==) a b = (pathLength a, verticalDrop a) == (pathLength b, verticalDrop b)
+instance Ord LongestEdgePath where
+  (<=) a b = (pathLength a, verticalDrop a) <= (pathLength b, verticalDrop b)
 
 edgesOfNode :: NodeId -> DAG -> [NodeId]
 edgesOfNode nodeId graph =
@@ -55,13 +61,7 @@ longestEdgePath sourceNodes graph =
   where
     longestPath' longPathTillNow nodeId =
       let nodeLongPath = longestPath nodeId
-      in if pathLength nodeLongPath > pathLength longPathTillNow
-         then nodeLongPath
-         else if pathLength nodeLongPath == pathLength longPathTillNow
-              then if verticalDrop nodeLongPath > verticalDrop longPathTillNow
-                   then nodeLongPath
-                   else longPathTillNow
-              else longPathTillNow
+      in max nodeLongPath longPathTillNow
 
     longestPath nodeId =
       -- this is dfs from this node
@@ -123,10 +123,11 @@ makeDAG filepath = do
       let updownEdges = zip3 prevRow row nextRow
           (edges', nodesInEdges', _) = addEdges ([], [], []) updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
-          (edges'', nodesInEdges'', allNodes) = addEdges ([], [], []) leftRightEdges
+          (edges'', nodesInEdges'', allNodes') = addEdges ([], [], []) leftRightEdges
           allEdges = force $ zipWith (\(k, a) (_, b) -> (k, a ++ b)) edges' edges''
           allNodesInEdges = force $ Set.union (Set.fromList nodesInEdges') (Set.fromList nodesInEdges'')
-      in (allEdges, allNodesInEdges, force allNodes)
+          allNodes = force allNodes'
+      in allEdges `seq` allNodesInEdges `seq` allNodes `seq` (allEdges, allNodesInEdges, allNodes)
 
     addEdges (!gInit, nInit, allNodes) edges =
       DL.foldl' (\ (!g', !n', !allNodes') ((pH, pId), (cH, cId), (nH, nId)) ->
@@ -153,7 +154,7 @@ longestPath :: DAGDataPath -> IO LongestEdgePath
 longestPath filepath = do
   (graph, sourceNodes, width, height) <- makeDAG filepath
   let l = longestEdgePath sourceNodes graph
-      p = reverse $ path l
+      p = traceShow "after longestEdgePath line: "  $ reverse $ path l
       coords = fmap (flip quotRem width) . fmap (flip (-) width) $ p
       cs = fmap show coords
       heights = fmap (heightOfNode . flip nodeData graph) p
