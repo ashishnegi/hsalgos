@@ -57,7 +57,7 @@ nodeData nodeId graph =
 
 longestEdgePath :: SourceNodes -> DAG -> LongestEdgePath
 longestEdgePath sourceNodes graph =
-  DL.foldl' longestPath' (LongestEdgePath 0 0 []) sourceNodes
+  traceShow "in longestEdgePath" $ DL.foldl' longestPath' (LongestEdgePath 0 0 []) sourceNodes
   where
     longestPath' longPathTillNow nodeId =
       let nodeLongPath = longestPath nodeId
@@ -102,9 +102,6 @@ makeDAG filepath = do
       mainData = fmap (take width) . take height $ mainData'
       rows = (replicate width 1501) : mainData ++ [(replicate width 1501)]
       heightsWithNodeIdsRows = force $ fmap (\ (row, rowId) -> fmap (\ (height, colId) -> (height, rowId * width + colId)) $ zip row [0..]) $ zip rows [0..]
-      emptyGraph = []
-      -- AdjList Map.empty $ Map.fromList (fmap (\(h, nid) -> (nid, Node h)) . concat . tail . init $ heightsWithNodeIdsRows)
-      emptyNodesWithEdges = [] -- this is bad : Set would be efficient ; but it is taking too much of memory.
       threeRowsInOneGo = zip3 heightsWithNodeIdsRows (drop 1 heightsWithNodeIdsRows) (drop 2 heightsWithNodeIdsRows)
       allData = fmap makeGraph threeRowsInOneGo
       allEdges = fmap (\(a, _, _) -> a) allData
@@ -113,23 +110,21 @@ makeDAG filepath = do
       graph = AdjList (Map.unions (fmap Map.fromList allEdges)) (Map.unions (fmap Map.fromList allNodes))
       sourceNodes = Set.difference (Set.fromList . Map.keys . nodesData $ graph) (Set.unions nodesWithInEdges)
 
-  -- traceShow [take 10 . Map.keys . nodesData $ graph] (return (Set.toList sourceNodes))
-  -- traceShow graph (return (Set.toList sourceNodes))
   traceShow "before returning makeDAG" $ return ""
-  return (graph, Set.toList sourceNodes, width, height)
+  return $ graph `seq` sourceNodes `seq` (graph, Set.toList sourceNodes, width, height)
 
   where
     makeGraph (prevRow, row, nextRow) =
       let updownEdges = zip3 prevRow row nextRow
-          (edges', nodesInEdges', _) = addEdges ([], [], []) updownEdges
+          (edges', nodesInEdges', _) = addEdges updownEdges
           leftRightEdges = zip3 ((1501, 0) : row) row ((drop 1 row) ++ [(1501,0)])
-          (edges'', nodesInEdges'', allNodes') = addEdges ([], [], []) leftRightEdges
+          (edges'', nodesInEdges'', allNodes') = addEdges leftRightEdges
           allEdges = force $ zipWith (\(k, a) (_, b) -> (k, a ++ b)) edges' edges''
           allNodesInEdges = force $ Set.union (Set.fromList nodesInEdges') (Set.fromList nodesInEdges'')
-          allNodes = force allNodes'
+          allNodes = force $ allNodes'
       in allEdges `seq` allNodesInEdges `seq` allNodes `seq` (allEdges, allNodesInEdges, allNodes)
 
-    addEdges (!gInit, nInit, allNodes) edges =
+    addEdges edges =
       DL.foldl' (\ (!g', !n', !allNodes') ((pH, pId), (cH, cId), (nH, nId)) ->
                   let (g'', n'') = if cH > pH
                                    then ([pId], pId : n')
@@ -138,7 +133,7 @@ makeDAG filepath = do
                                      then (nId : g'', nId : n'')
                                      else (g'', n'')
                   in ((cId, g''') : g', n''', (cId, Node cH) : allNodes'))
-                (gInit, nInit, allNodes)
+                ([], [], [])
                 edges
 
 readLines :: FilePath -> IO [String]
