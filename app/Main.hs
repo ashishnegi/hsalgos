@@ -7,5 +7,4 @@ main :: IO ()
 main = do
   filepath <- getLine
   longEdgePath <- LEP.longestPath filepath
-  putStrLn . show $ longEdgePath 
-  
+  putStrLn . show $ longEdgePath
