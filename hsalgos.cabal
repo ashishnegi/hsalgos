@@ -50,3 +50,12 @@ test-suite hsalgos-test
 source-repository head
   type:     git
   location: https://github.com/ashishnegi/hsalgos
+
+benchmark qsort
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      bench
+  main-is:             QuickSort.hs
+  build-depends:       criterion
+                     , base
+  ghc-options:         -O2 -threaded
+                       -Wall
